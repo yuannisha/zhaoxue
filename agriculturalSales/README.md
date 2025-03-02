@@ -56,6 +56,138 @@
 - Swagger/OpenAPI
 - Lombok
 
+## 数据库设计
+
+系统使用MySQL数据库，采用Flyway进行数据库版本控制和迁移管理。数据库名为`agricultural_sales`。
+
+### 数据库表结构
+
+#### 1. 用户表（users）
+用户表存储系统用户信息，包括卖家和消费者两种角色。
+
+| 字段名 | 数据类型 | 说明 |
+|--------|----------|------|
+| id | BIGINT | 主键，自增 |
+| username | VARCHAR(50) | 用户名，唯一 |
+| password | VARCHAR(100) | 密码，加密存储 |
+| role | ENUM | 用户角色，可选值：SELLER（卖家）、CUSTOMER（消费者） |
+| real_name | VARCHAR(50) | 真实姓名 |
+| phone | VARCHAR(20) | 联系电话 |
+| email | VARCHAR(100) | 电子邮箱 |
+| address | VARCHAR(200) | 地址 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+#### 2. 产品表（products）
+产品表存储卖家发布的农产品信息。
+
+| 字段名 | 数据类型 | 说明 |
+|--------|----------|------|
+| id | BIGINT | 主键，自增 |
+| name | VARCHAR(100) | 产品名称 |
+| description | TEXT | 产品描述 |
+| price | DECIMAL(10,2) | 产品价格 |
+| stock | INT | 库存数量 |
+| seller_id | BIGINT | 卖家ID，外键关联users表 |
+| type | ENUM | 产品类型，可选值：VEGETABLE（蔬菜）、FRUIT（水果）、GRAIN（粮食）、MEAT（肉类）、SEAFOOD（海鲜）、OTHER（其他） |
+| image | VARCHAR(255) | 产品图片路径 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+#### 3. 购物车项表（cart_items）
+购物车项表存储用户添加到购物车的商品信息。
+
+| 字段名 | 数据类型 | 说明 |
+|--------|----------|------|
+| id | BIGINT | 主键，自增 |
+| user_id | BIGINT | 用户ID，外键关联users表 |
+| product_id | BIGINT | 产品ID，外键关联products表 |
+| quantity | INT | 商品数量 |
+| image | VARCHAR(255) | 商品图片路径 |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_at | TIMESTAMP | 更新时间 |
+
+#### 4. 订单表（orders）
+订单表存储用户提交的订单信息。
+
+| 字段名 | 数据类型 | 说明 |
+|--------|----------|------|
+| id | BIGINT | 主键，自增 |
+| order_number | VARCHAR(50) | 订单编号，唯一 |
+| user_id | BIGINT | 下单用户ID，外键关联users表 |
+| seller_id | BIGINT | 卖家ID，外键关联users表 |
+| receiver_name | VARCHAR(50) | 收货人姓名 |
+| receiver_phone | VARCHAR(20) | 收货人电话 |
+| receiver_address | VARCHAR(255) | 收货地址 |
+| total_amount | DECIMAL(10,2) | 订单总金额 |
+| status | ENUM | 订单状态，可选值：PENDING_PAYMENT（待付款）、PENDING_SHIPMENT（待发货）、SHIPPED（已发货）、PENDING_RECEIPT（待收货）、COMPLETED（已完成）、CANCELLED（已取消） |
+| tracking_number | VARCHAR(50) | 物流单号 |
+| shipping_company | VARCHAR(50) | 物流公司 |
+| create_time | DATETIME | 订单创建时间 |
+| pay_time | DATETIME | 支付时间 |
+| ship_time | DATETIME | 发货时间 |
+| complete_time | DATETIME | 完成时间 |
+| created_at | DATETIME | 记录创建时间 |
+| updated_at | DATETIME | 记录更新时间 |
+
+#### 5. 订单项表（order_items）
+订单项表存储订单中包含的商品明细。
+
+| 字段名 | 数据类型 | 说明 |
+|--------|----------|------|
+| id | BIGINT | 主键，自增 |
+| order_id | BIGINT | 订单ID，外键关联orders表 |
+| product_id | BIGINT | 产品ID，外键关联products表 |
+| quantity | INT | 商品数量 |
+| price | DECIMAL(10,2) | 商品单价 |
+| total_price | DECIMAL(10,2) | 商品总价 |
+| created_at | DATETIME | 创建时间 |
+
+### 数据库关系
+
+系统中存在以下关系：
+
+1. **用户-产品关系**：一个卖家用户可以发布多个产品（一对多）
+2. **用户-购物车关系**：一个消费者用户可以有多个购物车项（一对多）
+3. **产品-购物车关系**：一个产品可以被添加到多个用户的购物车（一对多）
+4. **用户-订单关系**：一个消费者用户可以创建多个订单（一对多）
+5. **卖家-订单关系**：一个卖家用户可以接收多个订单（一对多）
+6. **订单-订单项关系**：一个订单包含多个订单项（一对多）
+7. **产品-订单项关系**：一个产品可以出现在多个订单项中（一对多）
+
+### 数据库索引
+
+系统为提高查询性能，建立了以下索引：
+
+1. 订单表（orders）索引：
+   - 用户ID索引（idx_user_id）：加速根据用户查询订单
+   - 卖家ID索引（idx_seller_id）：加速根据卖家查询订单
+   - 订单编号索引（idx_order_number）：加速根据订单编号查询订单
+   - 订单状态索引（idx_status）：加速根据订单状态查询订单
+
+2. 订单项表（order_items）索引：
+   - 订单ID索引（idx_order_id）：加速根据订单ID查询订单项
+   - 产品ID索引（idx_product_id）：加速根据产品ID查询订单项
+
+### 数据库配置
+
+系统使用以下数据库连接配置：
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/agricultural_sales?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+```
+
 ## 项目结构
 
 ```
@@ -312,3 +444,29 @@ mvn spring-boot:run
    - 使用 `mvn package` 打包生成 JAR 文件
    - 使用 `java -jar farm-products-1.0-SNAPSHOT.jar` 命令运行生成的 JAR 文件
    - 配置环境变量或启动参数以适应生产环境需求
+
+## 开发规范
+1. 代码规范
+   - 使用 ESLint 进行代码检查
+   - 遵循 Java 代码规范
+   - 使用 JSDoc 注释规范
+
+2. Git 提交规范
+   - feat: 新功能
+   - fix: 修复问题
+   - docs: 文档修改
+   - style: 代码格式修改
+   - refactor: 代码重构
+   - test: 测试用例修改
+   - chore: 其他修改
+
+## 注意事项
+1. 确保开发环境满足所有依赖要求
+2. 遵循代码规范和提交规范
+3. 保持文档的及时更新
+4. 定期同步主分支代码
+5. 数据库迁移脚本需按顺序执行
+6. 前后端接口定义需保持一致
+
+## 许可证
+MIT License
