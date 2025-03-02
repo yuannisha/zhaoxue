@@ -1,0 +1,19 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+
+    /* Linting */
+    "strict": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "skipLibCheck": true,  // 跳过库文件的类型检查
+    "noEmitOnError": false, // 允许生成输出文件，即使有错误
+    "noImplicitAny": false,  // 允许隐式 any 类型
+    "esModuleInterop": true,  // 启用 ES 模块的兼容性
+    "allowJs": true,          // 允许 JavaScript 文件
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+}
